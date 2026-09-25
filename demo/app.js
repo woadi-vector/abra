@@ -2,6 +2,15 @@
 // lives on the server; the browser never sees it.
 
 const $ = (id) => document.getElementById(id);
+
+// Access token for a shared preview link (?token=…), remembered for the session so
+// gated hosts (DEMO_ACCESS_TOKEN set) accept this browser's generation requests.
+try {
+  const t = new URL(location.href).searchParams.get('token');
+  if (t) sessionStorage.setItem('abra.token', t);
+} catch { /* ignore */ }
+const demoToken = () => { try { return sessionStorage.getItem('abra.token') || ''; } catch { return ''; } };
+
 let lastResult = null;
 let currentBook = null;
 let bookById = {};
@@ -114,7 +123,7 @@ async function run(_display, payload, statusId, btnId) {
   try {
     const res = await fetch('/api/story', {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', 'x-demo-token': demoToken() },
       body: JSON.stringify(payload),
     });
     const data = await res.json();
@@ -439,7 +448,7 @@ async function submitEdit() {
   try {
     const res = await fetch('/api/character-edit', {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', 'x-demo-token': demoToken() },
       body: JSON.stringify({ key: currentKey, characterId: editTargetId, instruction }),
     });
     const data = await res.json();

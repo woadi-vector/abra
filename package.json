@@ -23,19 +23,21 @@
     "eval:storyteller": "node evals/storyteller/run.mjs",
     "eval:guardian:offline": "node evals/guardian/checks.test.mjs",
     "eval:guardian": "node evals/guardian/run.mjs",
-    "demo": "node server/index.mjs"
+    "demo": "node server/index.mjs",
+    "start": "node server/index.mjs"
+  },
+  "engines": {
+    "node": ">=18"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.115.0",
     "@capacitor/android": "^8.4.2",
     "@capacitor/cli": "^8.4.2",
     "@capacitor/core": "^8.4.2",
     "@revenuecat/purchases-capacitor": "^13.3.0",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
     "pngjs": "^7.0.0",
     "vite": "^8.2.0"
-  },
-  "devDependencies": {
-    "@anthropic-ai/sdk": "^0.115.0",
-    "dotenv": "^17.4.2",
-    "express": "^5.2.1"
   }
 }

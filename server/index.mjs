@@ -43,14 +43,28 @@ dashboard.addFlag({
 const characters = createCharacterLibrary();
 const client = hasCredentials() ? makeClient() : null;
 
+// Optional lightweight access gate for a shared preview link. If DEMO_ACCESS_TOKEN
+// is set (e.g. on a public host), the generation endpoints require a matching token
+// (via ?token=…, an x-demo-token header, or a body field) so a leaked URL can't burn
+// the API budget. Unset ⇒ open (local dev). The static assets are never gated.
+const ACCESS_TOKEN = process.env.DEMO_ACCESS_TOKEN || '';
+function checkAccess(req, res, next) {
+  if (!ACCESS_TOKEN) return next();
+  const t = req.get('x-demo-token') || req.query.token || (req.body && req.body.token) || '';
+  if (t === ACCESS_TOKEN) return next();
+  return res.status(401).json({
+    error: 'This preview is access-limited. Open the full link your host shared — it includes an access token.',
+  });
+}
+
 app.get('/api/health', (req, res) => {
-  res.json({ ok: true, model: DEFAULT_MODEL, credentials: hasCredentials(), art: hasImageKey() });
+  res.json({ ok: true, model: DEFAULT_MODEL, credentials: hasCredentials(), art: hasImageKey(), accessRequired: Boolean(ACCESS_TOKEN) });
 });
 
 // POST /api/story
 //   single author:  { "text": "..." }
 //   co-writing:     { "segments": [ { "author": "Dad", "text": "..." }, ... ] }
-app.post('/api/story', async (req, res) => {
+app.post('/api/story', checkAccess, async (req, res) => {
   if (!client) {
     return res.status(400).json({
       error:
@@ -86,7 +100,7 @@ app.post('/api/story', async (req, res) => {
 
 // Edit a cast member's look and re-render the pages they appear on.
 //   { key, characterId, instruction }
-app.post('/api/character-edit', async (req, res) => {
+app.post('/api/character-edit', checkAccess, async (req, res) => {
   const { key, characterId, instruction } = req.body || {};
   if (!key || !characterId || !String(instruction || '').trim()) {
     return res.status(400).json({ error: 'Provide key, characterId, and a non-empty instruction.' });

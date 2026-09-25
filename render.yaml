@@ -1,0 +1,23 @@
+# Render.com Blueprint — deploys the FULL Abra demo server (voice input + live story
+# generation), unlike the static docs/ preview. Create it at render.com:
+#   New +  →  Blueprint  →  connect this repo  →  Apply.
+# Render reads this file and then prompts you for the three secret env vars below.
+#
+# The generation endpoints are gated by DEMO_ACCESS_TOKEN, so share the link WITH the
+# token: https://<your-service>.onrender.com/?token=<DEMO_ACCESS_TOKEN>
+services:
+  - type: web
+    name: abra-demo
+    runtime: node
+    plan: free           # free tier sleeps after ~15 min idle (first hit is a slow cold start)
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: ANTHROPIC_API_KEY   # required — Storyteller + Guardian
+        sync: false
+      - key: GEMINI_API_KEY      # optional — real ink-and-watercolor art (use your ROTATED key)
+        sync: false
+      - key: DEMO_ACCESS_TOKEN   # a shared secret you invent; testers' link must include ?token=<it>
+        sync: false
+      - key: NODE_VERSION
+        value: "20"
