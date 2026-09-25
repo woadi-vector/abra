@@ -14,8 +14,7 @@ the story.**
 
 ### ▶ Try it (no install)
 
-**Live preview → `https://<your-github-username>.github.io/<repo-name>/`**
-*(replace with your GitHub Pages URL once enabled — see "Judge demo" below)*
+**Live preview → https://woadi-vector.github.io/abra/**
 
 A key-free static preview of two finished example stories — **The Spaceman** and a
 **co-written** story ("Rocket") — with both the child view and the parent (Guardian)
