@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "_about": "Guardian sensitive-term configuration. Structure is public and reviewable; the raw term lists are intentionally MINIMAL. Per the Guardian spec, the classifier (src/agents/guardian.js) is the primary decision-maker — a wordlist alone is both too blunt (blocks innocent uses like 'cowboy with a gun') and too porous (misses paraphrase and concerning content in ordinary words). These seed lists are a fast-path/backstop and a set of illustrative signals, not an exhaustive detector. Operators may extend hard_block lists privately without touching Guardian logic.",
+  "hard_block": {
+    "_desc": "Lane 1. Explicit content refused at ingestion; never reaches the Storyteller. Floor-level and NOT parent-toggleable.",
+    "profanity": ["fuck", "shit", "asshole", "bitch"],
+    "sexual": [],
+    "graphic_violence": [],
+    "slurs": [],
+    "self_harm_methods": []
+  },
+  "hard_block_notes": {
+    "sexual": "Sexual content or sexualized language — left to the classifier; no seed terms committed to the repo.",
+    "graphic_violence": "Graphic violence / gore — the classifier distinguishes this from ordinary story conflict, weapons-in-play, or mild scariness, which MUST pass.",
+    "slurs": "Slurs and hate terms — left to the classifier; a raw slur dump is deliberately kept out of repo history.",
+    "self_harm_methods": "Self-harm methods or instructions — classifier only."
+  },
+  "flag_to_parent_signals": {
+    "_desc": "Lane 2. NOT blocked. Concerning content expressed in ordinary words; surfaced privately to the parent dashboard. Seeds below are illustrative — the classifier is primary and errs toward surfacing when uncertain.",
+    "distress": [
+      "nobody loves me",
+      "i want to disappear",
+      "i'm scared all the time",
+      "i wish i wasn't here"
+    ],
+    "harm_indicators": [
+      "hits me",
+      "hurts me",
+      "left a mark",
+      "i'm not allowed to eat"
+    ],
+    "unsafe_situation": [
+      "home alone all night",
+      "don't tell mom",
+      "the man at the door",
+      "we don't have any food"
+    ]
+  }
+}

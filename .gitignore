@@ -1,0 +1,18 @@
+node_modules/
+dist/
+android/
+.DS_Store
+*.log
+.env
+.env.local
+.env.*
+!.env.example
+
+# Claude Code local settings — may record machine paths or commands. Never commit.
+.claude/settings.local.json
+
+# Eval run artifacts (generated storybooks etc.)
+evals/**/.out/
+
+# Local generated art (test renders)
+.art/

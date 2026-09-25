@@ -1,0 +1,41 @@
+{
+  "name": "abra",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Abra - children's voice-driven storytelling (Android). RevenueCat Test Store purchase/restore harness.",
+  "author": "Jason Wold",
+  "contributors": [
+    "King Crawler, LLC (copyright holder)"
+  ],
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "cap:add:android": "cap add android",
+    "cap:sync": "npm run build && cap sync android",
+    "cap:open:android": "cap open android",
+    "cap:run:android": "npm run build && cap run android",
+    "eval:offline": "node evals/storyteller/checks.test.mjs && node evals/guardian/checks.test.mjs && node evals/output/checks.test.mjs",
+    "eval:output:offline": "node evals/output/checks.test.mjs",
+    "eval:storyteller:offline": "node evals/storyteller/checks.test.mjs",
+    "eval:storyteller": "node evals/storyteller/run.mjs",
+    "eval:guardian:offline": "node evals/guardian/checks.test.mjs",
+    "eval:guardian": "node evals/guardian/run.mjs",
+    "demo": "node server/index.mjs"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.4.2",
+    "@capacitor/cli": "^8.4.2",
+    "@capacitor/core": "^8.4.2",
+    "@revenuecat/purchases-capacitor": "^13.3.0",
+    "pngjs": "^7.0.0",
+    "vite": "^8.2.0"
+  },
+  "devDependencies": {
+    "@anthropic-ai/sdk": "^0.115.0",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1"
+  }
+}

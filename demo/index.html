@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Abra — story demo</title>
+    <style>
+      :root {
+        --bg: #f6f1ff;
+        --bg2: #efe7ff;
+        --ink: #241a3d;
+        --muted: #6a5f86;
+        --purple: #7a4fe0;
+        --purple-d: #5b34bd;
+        --card: #ffffff;
+        --line: rgba(122, 79, 224, 0.18);
+        --green: #2ea36b;
+        --amber: #c9821f;
+        --red: #d1495b;
+        --cream: #fff9ef;
+        --shadow: 0 10px 30px rgba(80, 40, 160, 0.10);
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        color: var(--ink);
+        background: radial-gradient(1200px 600px at 50% -10%, var(--bg2), var(--bg)) fixed;
+        -webkit-font-smoothing: antialiased;
+      }
+      /* Full-height, centered container. `safe center` centers the short
+         composer vertically but top-aligns (and scrolls) a tall rendered story
+         so nothing clips off the top. */
+      .wrap {
+        max-width: 1200px;
+        margin: 0 auto;
+        min-height: 100dvh;
+        display: flex;
+        flex-direction: column;
+        justify-content: safe center;
+        padding: 28px 40px 56px;
+        box-sizing: border-box;
+      }
+      header { text-align: center; margin-bottom: 18px; }
+      header h1 { font-size: 44px; margin: 0; letter-spacing: -0.02em; }
+      header p { margin: 8px auto 0; color: var(--muted); font-size: 17px; max-width: 660px; line-height: 1.5; }
+
+      .segmented { display: inline-flex; background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 4px; gap: 4px; box-shadow: var(--shadow); }
+      .segmented button { border: 0; background: transparent; color: var(--muted); font-weight: 600; font-size: 14px; padding: 9px 16px; border-radius: 999px; cursor: pointer; }
+      .segmented button.active { background: var(--purple); color: #fff; }
+      .feat { display: inline-block; margin-left: 7px; font-size: 10px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; background: #ffdca8; color: #8a5300; padding: 2px 7px; border-radius: 999px; vertical-align: middle; }
+      .center { text-align: center; }
+      .callout { display: flex; gap: 10px; align-items: flex-start; background: linear-gradient(135deg, #fff4e0, #f0e7ff); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; margin-bottom: 16px; font-size: 13.5px; line-height: 1.5; }
+      .callout .ic { font-size: 20px; line-height: 1; }
+      .callout b { color: var(--purple-d); }
+      .composer .lede { color: var(--muted); font-size: 13.5px; margin: -4px 0 14px; }
+
+      .composer { background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 20px; margin: 18px 0; box-shadow: var(--shadow); }
+      label.fld { display: block; font-size: 12px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px; }
+      input.name { width: 100%; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; font-size: 15px; margin-bottom: 12px; font-family: inherit; }
+      textarea { width: 100%; min-height: 150px; border: 1px solid var(--line); border-radius: 14px; padding: 16px; font-size: 17px; line-height: 1.55; resize: vertical; font-family: inherit; color: var(--ink); }
+      textarea:focus, input:focus { outline: 2px solid rgba(122,79,224,0.35); border-color: var(--purple); }
+
+      .cowrite-grid { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: stretch; }
+      .author-card { background: var(--cream); border: 1px solid var(--line); border-radius: 16px; padding: 14px; }
+      .author-card h3 { margin: 0 0 10px; font-size: 14px; color: var(--purple-d); }
+      .handoff { display: flex; align-items: center; justify-content: center; color: var(--purple); font-size: 26px; }
+      @media (max-width: 720px) { .cowrite-grid { grid-template-columns: 1fr; } .handoff { transform: rotate(90deg); } }
+
+      .runbar { display: flex; align-items: center; gap: 14px; margin-top: 14px; flex-wrap: wrap; }
+      button.go { background: var(--purple); color: #fff; border: 0; border-radius: 14px; padding: 13px 22px; font-size: 16px; font-weight: 700; cursor: pointer; box-shadow: var(--shadow); }
+      button.go:disabled { opacity: 0.5; cursor: default; }
+      button.ghost { background: transparent; border: 1px solid var(--line); color: var(--muted); border-radius: 12px; padding: 9px 14px; font-weight: 600; cursor: pointer; font-size: 13px; }
+      .status { color: var(--muted); font-size: 14px; }
+      .status.err { color: var(--red); font-weight: 600; }
+
+      .viewbar { display: none; justify-content: center; margin: 6px 0 18px; }
+      .viewbar.show { display: flex; }
+
+      .stage { display: none; }
+      .stage.show { display: block; }
+
+      /* ---- CHILD VIEW ---- */
+      .child-head { text-align: center; margin-bottom: 8px; }
+      .child-head .byline { color: var(--muted); font-size: 14px; }
+      .child-head .byline b { color: var(--purple-d); }
+      .booktitle { font-size: 46px; font-weight: 800; letter-spacing: -0.01em; margin: 4px 0 20px; text-align: center; }
+      .page { background: var(--card); border: 1px solid var(--line); border-radius: 26px; overflow: hidden; margin: 0 auto 30px; max-width: 880px; box-shadow: var(--shadow); }
+      /* Square illustration area so the whole (1:1) rendered image is visible,
+         not a cropped middle strip. */
+      .illus { aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center; font-size: 128px; position: relative; background-size: cover; }
+      .illus .cap { position: absolute; bottom: 10px; left: 14px; right: 14px; font-size: 13px; color: rgba(36,26,61,0.55); font-style: italic; text-align: center; }
+
+      /* ---- real rendered page art (contain = show the full picture, no crop) ---- */
+      .illus .pageimg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: block; }
+      .illus.has-img .ph { display: none; }
+      /* caption sits over the artwork — strong scrim + shadow so white always reads */
+      .illus.has-img .cap { color: #fff; left: 0; right: 0; bottom: 0; padding: 34px 16px 10px; margin: 0; background: linear-gradient(transparent, rgba(0,0,0,0.35) 40%, rgba(0,0,0,0.78)); text-shadow: 0 1px 3px rgba(0,0,0,0.85); font-weight: 500; }
+      /* loading shimmer while a page image is still generating/loading */
+      .illus.loading::after { content: ""; position: absolute; inset: 0; z-index: 2; background: linear-gradient(110deg, rgba(255,255,255,0) 30%, rgba(255,255,255,0.55) 50%, rgba(255,255,255,0) 70%); background-size: 220% 100%; animation: shimmer 1.15s linear infinite; }
+      .illus.loading .cap { display: none; }
+      @keyframes shimmer { to { background-position: -220% 0; } }
+      .page .body { padding: 24px 30px 28px; }
+      .page .text { font-size: 26px; line-height: 1.5; }
+      .page .who { display: inline-flex; align-items: center; gap: 6px; margin-top: 14px; font-size: 12px; font-weight: 700; color: var(--purple-d); background: rgba(122,79,224,0.10); padding: 5px 10px; border-radius: 999px; }
+      .redirect { max-width: 560px; margin: 20px auto; background: var(--cream); border: 1px solid var(--line); border-radius: 22px; padding: 30px; text-align: center; box-shadow: var(--shadow); }
+      .redirect .big { font-size: 22px; font-weight: 700; }
+      .redirect .sub { color: var(--muted); margin-top: 8px; font-size: 14px; }
+
+      /* ---- PARENT VIEW ---- */
+      .panel { background: var(--card); border: 1px solid var(--line); border-radius: 22px; padding: 24px 28px; margin: 0 auto 18px; max-width: 980px; box-shadow: var(--shadow); }
+      .panel h2 { margin: 0 0 6px; font-size: 18px; letter-spacing: 0.01em; }
+      .panel .lede { color: var(--muted); font-size: 13.5px; margin: 0 0 16px; line-height: 1.5; }
+      .lane { display: flex; align-items: flex-start; gap: 16px; padding: 16px 0; border-top: 1px dashed var(--line); }
+      .lane:first-of-type { border-top: 0; padding-top: 4px; }
+      .lane .n { width: 34px; height: 34px; border-radius: 10px; background: var(--bg2); color: var(--purple-d); font-weight: 800; font-size: 15px; display: flex; align-items: center; justify-content: center; flex: none; }
+      .lane .body { flex: 1; }
+      .lane .title { font-weight: 700; font-size: 15.5px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+      .lane .detail { color: var(--muted); font-size: 14px; margin-top: 5px; line-height: 1.55; }
+      .badge { display: inline-block; font-size: 11px; font-weight: 800; letter-spacing: 0.04em; padding: 4px 10px; border-radius: 999px; text-transform: uppercase; }
+      .b-pass { background: rgba(46,163,107,0.16); color: #1f7d50; }
+      .b-block { background: rgba(209,73,91,0.16); color: #b5384a; }
+      .b-flag { background: rgba(201,130,31,0.18); color: #9a6212; }
+      .b-info { background: rgba(122,79,224,0.14); color: var(--purple-d); }
+      .pagerow { display: flex; align-items: center; gap: 8px; font-size: 13.5px; padding: 5px 0; color: var(--muted); }
+      .flagcard { background: var(--cream); border: 1px solid rgba(201,130,31,0.45); border-radius: 16px; padding: 16px 18px; margin-top: 12px; }
+      .flagcard .passage { font-style: italic; color: var(--ink); border-left: 3px solid var(--amber); padding-left: 12px; margin: 10px 0; line-height: 1.5; }
+      .flagcard .note { font-size: 14px; line-height: 1.55; color: var(--ink); }
+      .muted { color: var(--muted); }
+      .hint { text-align: center; color: var(--muted); font-size: 12px; margin-top: 26px; line-height: 1.6; }
+
+      /* ---- character cast (polished "cast of characters" strip) ---- */
+      .cast { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; align-items: stretch; margin: 0 auto 22px; max-width: 940px; background: linear-gradient(180deg, #fff, #fbf8ff); border: 1px solid var(--line); border-radius: 22px; padding: 16px 20px 18px; box-shadow: var(--shadow); }
+      .cast .lbl { width: 100%; text-align: center; font-size: 12px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--purple-d); margin-bottom: 10px; }
+      .chip { display: flex; align-items: center; gap: 11px; background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 6px 18px 6px 6px; box-shadow: 0 4px 14px rgba(80,40,160,0.08); cursor: pointer; }
+      .chip .av { width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 26px; overflow: hidden; background: var(--bg2); border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.12); }
+      .chip .av img { width: 100%; height: 100%; object-fit: cover; }
+      .chip .nm { font-weight: 700; font-size: 15.5px; }
+
+      /* ---- book toolbar (layout / narrate / animate) ---- */
+      .booktoolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: center; margin-bottom: 24px; background: rgba(255,255,255,0.55); border: 1px solid var(--line); border-radius: 999px; padding: 8px 12px; max-width: max-content; margin-left: auto; margin-right: auto; box-shadow: var(--shadow); }
+      .mini { border: 1px solid var(--line); background: #fff; color: var(--ink); border-radius: 999px; padding: 9px 16px; font-weight: 600; font-size: 13.5px; cursor: pointer; transition: background 0.1s, color 0.1s; }
+      .mini:hover { border-color: var(--purple); }
+      .mini.active { background: var(--purple); color: #fff; border-color: var(--purple); }
+      .mini.speaking { background: var(--green); color: #fff; border-color: var(--green); }
+      .btn-premium { border: 0; border-radius: 999px; padding: 10px 18px; font-weight: 800; font-size: 13.5px; cursor: pointer; background: linear-gradient(135deg, #ffcf6b, #ff9db0); color: #5b2a00; box-shadow: 0 6px 16px rgba(255,150,120,0.35); }
+      .btn-premium .tag { font-size: 10px; letter-spacing: 0.04em; opacity: 0.85; }
+
+      /* ---- storybook illustration internals ---- */
+      .illus { overflow: hidden; }
+      .illus .avstack { display: flex; gap: 18px; flex-wrap: wrap; align-items: center; justify-content: center; font-size: 104px; padding: 0 16px; }
+      .page.speaking { outline: 3px solid var(--purple); outline-offset: 2px; }
+
+      /* ---- comic layout: panels blocked together into comic-book pages (3–4/page) ---- */
+      .pages.comic { display: block; max-width: 840px; margin: 0 auto; }
+      .comic-sheet { background: #fffdf5; border: 3px solid #241a3d; border-radius: 10px; padding: 12px; margin: 0 auto 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; box-shadow: var(--shadow); }
+      .comic-sheet[data-count="1"] { grid-template-columns: 1fr; }
+      .comic-sheet[data-count="3"] .cpanel:first-child { grid-column: 1 / -1; }
+      .cpanel { margin: 0; border: 3px solid #241a3d; border-radius: 4px; overflow: hidden; background: #fff; display: flex; flex-direction: column; }
+      .cpanel-illus { position: relative; aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center; font-size: 64px; overflow: hidden; }
+      .cpanel-illus .pageimg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+      .cpanel-illus .ph { display: flex; }
+      .cpanel-illus.has-img .ph { display: none; }
+      .cpanel-illus.loading::after { content: ""; position: absolute; inset: 0; z-index: 2; background: linear-gradient(110deg, rgba(255,255,255,0) 30%, rgba(255,255,255,0.55) 50%, rgba(255,255,255,0) 70%); background-size: 220% 100%; animation: shimmer 1.15s linear infinite; }
+      .cnarr { font-family: "Comic Sans MS", "Comic Neue", "Segoe UI", sans-serif; font-size: 15px; line-height: 1.35; padding: 10px 12px; background: #fff; border-top: 3px solid #241a3d; color: #241a3d; font-weight: 600; }
+      .cwho { display: inline-block; margin-left: 6px; font-size: 11px; color: var(--purple-d); font-weight: 700; }
+      .cpanel.speaking { outline: 3px solid var(--purple); outline-offset: 1px; }
+      @media (max-width: 560px) { .comic-sheet { grid-template-columns: 1fr; } .comic-sheet[data-count="3"] .cpanel:first-child { grid-column: auto; } }
+
+      /* ---- premium modal ---- */
+      .modal-bg { position: fixed; inset: 0; background: rgba(24, 12, 44, 0.5); display: none; align-items: center; justify-content: center; z-index: 60; padding: 20px; }
+      .modal-bg.show { display: flex; }
+      .modal { background: #fff; border-radius: 22px; padding: 28px; max-width: 440px; text-align: center; box-shadow: 0 20px 60px rgba(40, 20, 90, 0.35); }
+      .modal .lock { font-size: 44px; }
+      .modal h3 { margin: 10px 0 6px; font-size: 20px; }
+      .modal p { color: var(--muted); font-size: 14px; line-height: 1.5; margin: 0 0 16px; }
+      .modal .pill { display: inline-block; background: rgba(122,79,224,0.1); color: var(--purple-d); font-weight: 700; font-size: 12px; padding: 5px 12px; border-radius: 999px; margin: 2px; }
+      .modal .close { margin-top: 16px; background: var(--purple); color: #fff; border: 0; border-radius: 12px; padding: 11px 18px; font-weight: 700; cursor: pointer; }
+
+      /* ---- edit-character modal ---- */
+      .modal.edit { text-align: left; }
+      .edit-head { display: flex; align-items: center; gap: 12px; }
+      .edit-head h3 { margin: 0; }
+      .edit-av { width: 48px; height: 48px; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 26px; background: var(--bg2); flex: none; }
+      .edit-av img { width: 100%; height: 100%; object-fit: cover; }
+      .edit-canon { font-size: 12.5px; color: var(--muted); line-height: 1.5; margin: 12px 0 14px; max-height: 96px; overflow: auto; }
+      .edit-actions { display: flex; gap: 10px; align-items: center; margin-top: 4px; }
+      .edit-actions .close { margin-top: 0; }
+      /* clickable cast chips */
+      .cast .chip { cursor: pointer; transition: transform 0.08s ease, box-shadow 0.08s ease; }
+      .cast .chip:hover { transform: translateY(-1px); box-shadow: 0 12px 26px rgba(80,40,160,0.16); }
+      .chip .edit-badge { font-size: 11px; color: var(--purple-d); font-weight: 700; opacity: 0.7; margin-left: 2px; }
+
+      /* ---- voice input ---- */
+      .microw { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
+      .mic { border: 0; border-radius: 999px; padding: 9px 16px; font-weight: 700; font-size: 14px; cursor: pointer; background: var(--purple); color: #fff; box-shadow: var(--shadow); }
+      .mic.mic-sm { padding: 6px 12px; font-size: 12px; }
+      .mic.listening { background: var(--red); animation: micpulse 1.1s ease-in-out infinite; }
+      .mic:disabled { opacity: 0.5; cursor: default; box-shadow: none; }
+      @keyframes micpulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(209, 73, 91, 0.5); } 50% { box-shadow: 0 0 0 9px rgba(209, 73, 91, 0); } }
+      .micstatus { font-size: 13px; color: var(--muted); }
+      .micstatus.err { color: var(--red); font-weight: 600; }
+      .micstatus .live { color: var(--ink); font-style: italic; }
+      .micnote { font-size: 11.5px; color: var(--muted); margin: -2px 0 12px; line-height: 1.45; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <h1>Abra ✨</h1>
+        <p>Every child makes their own story. Tell it out loud — Abra brings it to life without tidying it, and Guardian keeps it safe.</p>
+      </header>
+
+      <div class="center">
+        <div class="segmented" id="modebar">
+          <button data-mode="single" class="active">✨ Make your own story</button>
+          <button data-mode="cowrite">Co-write together<span class="feat">Featured</span></button>
+        </div>
+      </div>
+
+      <!-- SINGLE — the primary path: any child starts their own story -->
+      <div class="composer" id="composer-single">
+        <p class="lede">Start from a blank page and say anything. It's <b>your</b> story — Abra keeps your exact words and never tidies it up.</p>
+        <label class="fld">Your name (optional)</label>
+        <input class="name" id="single-author" placeholder="Your name" />
+        <label class="fld">Your story</label>
+        <div class="microw">
+          <button class="mic" id="mic-single" data-target="single-text" type="button">🎤 Speak your story</button>
+          <span class="micstatus" id="micstatus-single"></span>
+        </div>
+        <textarea id="single-text" placeholder="Speak it out loud, or type here — say it however you want. Abra keeps your words."></textarea>
+        <p class="micnote">Speak or type — both work. Chrome's speech recognition may drop some "um"s and false starts on its side; Abra never cleans up the <em>decisions</em> in your story. You can also “Try an example” below.</p>
+        <div class="runbar">
+          <button class="go" id="go-single">Bring my story to life ✨</button>
+          <button class="ghost" id="ex-single">Try an example</button>
+          <span class="status" id="status-single"></span>
+        </div>
+      </div>
+
+      <!-- CO-WRITE — a featured way to tell a story together, from anywhere -->
+      <div class="composer" id="composer-cowrite" style="display:none">
+        <div class="callout">
+          <span class="ic">✍️</span>
+          <div>A featured way to tell a story <b>together</b> — two people, even far apart. One writes a part and hands it off; the other picks it up. Abra brings <b>both</b> parts to life as one story, and never smooths over where they meet.</div>
+        </div>
+        <div class="cowrite-grid">
+          <div class="author-card">
+            <h3>✍️ Author&nbsp;1</h3>
+            <label class="fld">Name</label>
+            <input class="name" id="a1-name" placeholder="e.g. Jason" />
+            <label class="fld">Their part</label>
+            <div class="microw">
+              <button class="mic mic-sm" id="mic-a1" data-target="a1-text" type="button">🎤 Speak</button>
+              <span class="micstatus" id="micstatus-a1"></span>
+            </div>
+            <textarea id="a1-text" placeholder="Speak or type this part…"></textarea>
+          </div>
+          <div class="handoff">→</div>
+          <div class="author-card">
+            <h3>✍️ Author&nbsp;2</h3>
+            <label class="fld">Name</label>
+            <input class="name" id="a2-name" placeholder="e.g. Trenton" />
+            <label class="fld">Their part</label>
+            <div class="microw">
+              <button class="mic mic-sm" id="mic-a2" data-target="a2-text" type="button">🎤 Speak</button>
+              <span class="micstatus" id="micstatus-a2"></span>
+            </div>
+            <textarea id="a2-text" placeholder="Speak or type this part…"></textarea>
+          </div>
+        </div>
+        <div class="runbar">
+          <button class="go" id="go-cowrite">Combine &amp; bring it to life ✨</button>
+          <button class="ghost" id="ex-cowrite">Try the example</button>
+          <span class="status" id="status-cowrite"></span>
+        </div>
+      </div>
+
+      <div class="viewbar" id="viewbar">
+        <div class="segmented">
+          <button data-view="child" class="active" id="view-child">👦 Child view</button>
+          <button data-view="parent" id="view-parent">👪 Parent view</button>
+        </div>
+      </div>
+
+      <div class="stage" id="stage-child"></div>
+      <div class="stage" id="stage-parent"></div>
+
+      <p class="hint">
+        Abra is a creative storytelling tool — not a monitoring or safety-assessment product.
+        Guardian surfaces concerns to a parent; it does not diagnose or make determinations about a child.
+        Voice cloning is not part of Abra.
+      </p>
+    </div>
+
+    <div class="modal-bg" id="edit-modal">
+      <div class="modal edit">
+        <div class="edit-head">
+          <span class="edit-av" id="edit-av"></span>
+          <h3 id="edit-name">Edit character</h3>
+        </div>
+        <p class="edit-canon" id="edit-canon"></p>
+        <label class="fld" for="edit-input" style="text-align:left">Describe the change</label>
+        <input class="name" id="edit-input" placeholder="e.g. make the gloves blue, boots yellow" />
+        <div class="edit-actions">
+          <button class="close" id="edit-go">✨ Regenerate</button>
+          <button class="ghost" id="edit-cancel">Cancel</button>
+        </div>
+        <div class="status" id="edit-status" style="margin-top:12px"></div>
+      </div>
+    </div>
+
+    <div class="modal-bg" id="premium-modal">
+      <div class="modal">
+        <div class="lock">🎬🔒</div>
+        <h3>Make it move — Premium</h3>
+        <p id="premium-msg">Short animated clips are a premium Abra output.</p>
+        <div>
+          <span class="pill" id="premium-sub">Unlock with a subscription</span>
+          <span class="pill" id="premium-credits">or a credit pack</span>
+        </div>
+        <p style="margin-top:14px;font-size:12px">Coming in v2. The same characters from your storybook — kept consistent — are what make animation possible.</p>
+        <button class="close" id="premium-close">Back to the story</button>
+      </div>
+    </div>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
